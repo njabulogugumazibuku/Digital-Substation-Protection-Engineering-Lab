@@ -43,3 +43,30 @@ print(
     f"LV Rated Current: "
     f"{lv_rated_current:.2f} A"
 )
+
+# ==========================================
+# Maximum Operating Current Assumption
+# ==========================================
+
+continuous_loading_factor = 1.20
+
+hv_max_operating_current = (
+    hv_rated_current * continuous_loading_factor
+)
+
+lv_max_operating_current = (
+    lv_rated_current * continuous_loading_factor
+)
+
+print("\nMAXIMUM OPERATING CURRENT")
+print("-" * 45)
+
+print(
+    f"HV Maximum Operating Current: "
+    f"{hv_max_operating_current:.2f} A"
+)
+
+print(
+    f"LV Maximum Operating Current: "
+    f"{lv_max_operating_current:.2f} A"
+)
