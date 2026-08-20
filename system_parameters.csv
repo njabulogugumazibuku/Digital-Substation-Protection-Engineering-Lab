@@ -1,1 +1,11 @@
-
+parameter,value,unit,description
+transformer_rating,50,MVA,Transformer apparent power rating
+hv_voltage,132,kV,Transformer high voltage nominal voltage
+lv_voltage,33,kV,Transformer low voltage nominal voltage
+frequency,50,Hz,System nominal frequency
+number_of_feeders,3,,Number of outgoing feeders
+hv_breaker,CB-101,,High voltage transformer breaker
+lv_breaker,CB-201,,Transformer low voltage breaker
+feeder_1_breaker,CB-301,,Feeder 1 circuit breaker
+feeder_2_breaker,CB-302,,Feeder 2 circuit breaker
+feeder_3_breaker,CB-303,,Feeder 3 circuit breaker
