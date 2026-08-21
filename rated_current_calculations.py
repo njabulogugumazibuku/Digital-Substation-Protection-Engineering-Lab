@@ -116,3 +116,29 @@ print(
     f"LV Relay Current at Rated Load: "
     f"{lv_relay_rated_current:.3f} A"
 )
+# ==========================================
+# Preliminary Overcurrent Pickup
+# ==========================================
+
+pickup_margin = 1.25
+
+lv_phase_pickup_primary = (
+    lv_max_operating_current * pickup_margin
+)
+
+lv_phase_pickup_secondary = (
+    lv_phase_pickup_primary / lv_ct_ratio
+)
+
+print("\nPRELIMINARY PHASE OVERCURRENT PICKUP")
+print("-" * 45)
+
+print(
+    f"Primary Pickup Current: "
+    f"{lv_phase_pickup_primary:.2f} A"
+)
+
+print(
+    f"Relay Secondary Pickup: "
+    f"{lv_phase_pickup_secondary:.3f} A"
+)
