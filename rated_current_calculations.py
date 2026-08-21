@@ -70,3 +70,49 @@ print(
     f"LV Maximum Operating Current: "
     f"{lv_max_operating_current:.2f} A"
 )
+# ==========================================
+# CT Selection
+# ==========================================
+
+hv_ct_primary = 300
+hv_ct_secondary = 1
+
+lv_ct_primary = 1200
+lv_ct_secondary = 1
+
+hv_ct_ratio = hv_ct_primary / hv_ct_secondary
+lv_ct_ratio = lv_ct_primary / lv_ct_secondary
+
+# Convert primary rated currents
+# to relay secondary currents
+
+hv_relay_rated_current = (
+    hv_rated_current / hv_ct_ratio
+)
+
+lv_relay_rated_current = (
+    lv_rated_current / lv_ct_ratio
+)
+
+print("\nCT SELECTION")
+print("-" * 45)
+
+print(
+    f"HV CT: "
+    f"{hv_ct_primary}/{hv_ct_secondary} A"
+)
+
+print(
+    f"LV CT: "
+    f"{lv_ct_primary}/{lv_ct_secondary} A"
+)
+
+print(
+    f"HV Relay Current at Rated Load: "
+    f"{hv_relay_rated_current:.3f} A"
+)
+
+print(
+    f"LV Relay Current at Rated Load: "
+    f"{lv_relay_rated_current:.3f} A"
+)
