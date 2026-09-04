@@ -1,184 +1,216 @@
-# ==========================================
-# DIGITAL SUBSTATION PROTECTION ENGINEERING LAB
-# Feeder Protection IED Simulator
-# ==========================================
+import os
+import sys
+
+# ---------------------------------------------------------
+# Import IED configuration
+# ---------------------------------------------------------
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "03_ied_configuration")
+    )
+)
 
 from ied_configuration import ied_configuration
 
 
+# ---------------------------------------------------------
+# Import IEC inverse-time calculation
+# ---------------------------------------------------------
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "05_coordination")
+    )
+)
+
+from iec_curves import inverse_time
+
+
+# ---------------------------------------------------------
+# Phase Overcurrent Protection
+# ---------------------------------------------------------
+
 def evaluate_phase_overcurrent(current_a):
-    """
-    Evaluate phase overcurrent protection.
 
-    PTOC2 represents instantaneous 50 protection.
-    PTOC1 represents time-delayed 51 protection.
-    """
+    phase_config = ied_configuration[
+        "logical_devices"
+    ]["LD_PROTECTION"]["logical_nodes"]
 
-    ptoc1 = ied_configuration["logical_nodes"]["PTOC1"]
-    ptoc2 = ied_configuration["logical_nodes"]["PTOC2"]
+    instantaneous = phase_config["PTOC2"]
+    time_overcurrent = phase_config["PTOC1"]
 
-    if (
-        ptoc2["enabled"]
-        and current_a >= ptoc2["pickup_a"]
-    ):
+    # -----------------------------------------------------
+    # 50 Instantaneous Overcurrent
+    # -----------------------------------------------------
+
+    if current_a >= instantaneous["pickup_a"]:
 
         return {
             "logical_node": "PTOC2",
-            "function": ptoc2["function"],
-            "state": "OPERATE",
-            "delay_s": ptoc2["delay_s"]
+            "function": "50",
+            "status": "OPERATE",
+            "operating_time_s": instantaneous["delay_s"]
         }
 
-    if (
-        ptoc1["enabled"]
-        and current_a >= ptoc1["pickup_a"]
-    ):
+    # -----------------------------------------------------
+    # 51 Time Overcurrent
+    # -----------------------------------------------------
+
+    if current_a >= time_overcurrent["pickup_a"]:
+
+        operating_time = inverse_time(
+            current_a=current_a,
+            pickup_a=time_overcurrent["pickup_a"],
+            tms=0.10,
+            curve="standard_inverse"
+        )
 
         return {
             "logical_node": "PTOC1",
-            "function": ptoc1["function"],
-            "state": "OPERATE",
-            "delay_s": ptoc1["delay_s"]
+            "function": "51",
+            "status": "OPERATE",
+            "operating_time_s": operating_time
         }
+
+    # -----------------------------------------------------
+    # No Operation
+    # -----------------------------------------------------
 
     return {
         "logical_node": "PTOC",
-        "function": "Phase Overcurrent",
-        "state": "NO OPERATE",
-        "delay_s": None
+        "function": "50/51",
+        "status": "NO OPERATE",
+        "operating_time_s": None
     }
 
 
+# ---------------------------------------------------------
+# Earth Fault Protection
+# ---------------------------------------------------------
+
 def evaluate_earth_fault(current_a):
-    """
-    Evaluate earth fault protection.
 
-    PTEF2 represents instantaneous 50N protection.
-    PTEF1 represents time-delayed 51N protection.
-    """
+    phase_config = ied_configuration[
+        "logical_devices"
+    ]["LD_PROTECTION"]["logical_nodes"]
 
-    ptef1 = ied_configuration["logical_nodes"]["PTEF1"]
-    ptef2 = ied_configuration["logical_nodes"]["PTEF2"]
+    instantaneous = phase_config["PTEF2"]
+    time_overcurrent = phase_config["PTEF1"]
 
-    if (
-        ptef2["enabled"]
-        and current_a >= ptef2["pickup_a"]
-    ):
+    # -----------------------------------------------------
+    # 50N Instantaneous Earth Fault
+    # -----------------------------------------------------
+
+    if current_a >= instantaneous["pickup_a"]:
 
         return {
             "logical_node": "PTEF2",
-            "function": ptef2["function"],
-            "state": "OPERATE",
-            "delay_s": ptef2["delay_s"]
+            "function": "50N",
+            "status": "OPERATE",
+            "operating_time_s": instantaneous["delay_s"]
         }
 
-    if (
-        ptef1["enabled"]
-        and current_a >= ptef1["pickup_a"]
-    ):
+    # -----------------------------------------------------
+    # 51N Time Earth Fault
+    # -----------------------------------------------------
+
+    if current_a >= time_overcurrent["pickup_a"]:
 
         return {
             "logical_node": "PTEF1",
-            "function": ptef1["function"],
-            "state": "OPERATE",
-            "delay_s": ptef1["delay_s"]
+            "function": "51N",
+            "status": "OPERATE",
+            "operating_time_s": time_overcurrent["delay_s"]
         }
+
+    # -----------------------------------------------------
+    # No Operation
+    # -----------------------------------------------------
 
     return {
         "logical_node": "PTEF",
-        "function": "Earth Fault Protection",
-        "state": "NO OPERATE",
-        "delay_s": None
+        "function": "50N/51N",
+        "status": "NO OPERATE",
+        "operating_time_s": None
     }
 
 
-def process_trip(protection_result):
-    """
-    Simulate PTRC1 trip conditioning.
-    """
+# ---------------------------------------------------------
+# Trip Conditioning - PTRC1
+# ---------------------------------------------------------
 
-    if protection_result["state"] == "OPERATE":
+def process_trip(protection_result):
+
+    if protection_result["status"] == "OPERATE":
 
         return {
             "logical_node": "PTRC1",
-            "state": "TRIP",
-            "input": protection_result["logical_node"]
+            "status": "TRIP",
+            "source_protection": protection_result["logical_node"]
         }
 
     return {
         "logical_node": "PTRC1",
-        "state": "NO TRIP",
-        "input": protection_result["logical_node"]
+        "status": "NO TRIP",
+        "source_protection": None
     }
 
 
+# ---------------------------------------------------------
+# Circuit Breaker - XCBR1
+# ---------------------------------------------------------
+
 def operate_breaker(trip_result):
-    """
-    Simulate XCBR1 circuit breaker operation.
-    """
 
-    breaker = ied_configuration["logical_nodes"]["XCBR1"]
-
-    if trip_result["state"] == "TRIP":
+    if trip_result["status"] == "TRIP":
 
         return {
             "logical_node": "XCBR1",
-            "breaker_id": breaker["breaker_id"],
-            "command": "OPEN",
+            "breaker": "CB-301",
             "state": "OPEN"
         }
 
     return {
         "logical_node": "XCBR1",
-        "breaker_id": breaker["breaker_id"],
-        "command": "NONE",
-        "state": breaker["normal_state"]
+        "breaker": "CB-301",
+        "state": "CLOSED"
     }
 
 
+# ---------------------------------------------------------
+# Complete IED Simulation
+# ---------------------------------------------------------
+
 def simulate_ied(current_a, fault_type):
-    """
-    Run a fault condition through the simulated IED.
-    """
 
-    print("=" * 60)
-    print("FEEDER PROTECTION IED SIMULATION")
-    print("=" * 60)
+    print("\n----------------------------------------")
+    print("IED PROTECTION SIMULATION")
+    print("----------------------------------------")
 
-    print(f"\nMeasured Current: {current_a} A")
-    print(f"Fault Type: {fault_type}")
+    print(f"Fault current: {current_a} A")
+    print(f"Fault type: {fault_type}")
 
-    # ------------------------------------------
-    # Select protection function
-    # ------------------------------------------
+    # -----------------------------------------------------
+    # Measurement
+    # -----------------------------------------------------
 
-    if fault_type == "Phase-to-Phase":
+    print("\nMMXU1 - Measurement")
+    print(f"Measured current: {current_a} A")
 
-        protection_result = (
-            evaluate_phase_overcurrent(current_a)
-        )
+    # -----------------------------------------------------
+    # Protection evaluation
+    # -----------------------------------------------------
 
-    elif fault_type == "Phase-to-Earth":
+    if fault_type == "phase-to-earth":
 
-        protection_result = (
-            evaluate_earth_fault(current_a)
-        )
+        protection_result = evaluate_earth_fault(current_a)
 
     else:
 
-        protection_result = {
-            "logical_node": "NONE",
-            "function": "No Protection Function Selected",
-            "state": "NO OPERATE",
-            "delay_s": None
-        }
+        protection_result = evaluate_phase_overcurrent(current_a)
 
-    # ------------------------------------------
-    # Display protection decision
-    # ------------------------------------------
-
-    print("\nPROTECTION ELEMENT")
-
+    print("\nProtection Element")
     print(
         f"Logical Node: "
         f"{protection_result['logical_node']}"
@@ -190,115 +222,85 @@ def simulate_ied(current_a, fault_type):
     )
 
     print(
-        f"State: "
-        f"{protection_result['state']}"
+        f"Status: "
+        f"{protection_result['status']}"
     )
 
-    if protection_result["delay_s"] is not None:
+    if protection_result["operating_time_s"] is not None:
 
         print(
-            f"Operating Delay: "
-            f"{protection_result['delay_s']} s"
+            f"Operating time: "
+            f"{protection_result['operating_time_s']:.3f} s"
         )
 
-    # ------------------------------------------
+    # -----------------------------------------------------
     # Trip conditioning
-    # ------------------------------------------
+    # -----------------------------------------------------
 
-    trip_result = process_trip(
-        protection_result
-    )
+    trip_result = process_trip(protection_result)
 
-    print("\nTRIP CONDITIONING")
+    print("\nPTRC1 - Trip Conditioning")
+    print(f"Trip status: {trip_result['status']}")
 
-    print(
-        f"Logical Node: "
-        f"{trip_result['logical_node']}"
-    )
+    # -----------------------------------------------------
+    # Breaker operation
+    # -----------------------------------------------------
 
-    print(
-        f"State: "
-        f"{trip_result['state']}"
-    )
+    breaker_result = operate_breaker(trip_result)
 
-    print(
-        f"Input: "
-        f"{trip_result['input']}"
-    )
-
-    # ------------------------------------------
-    # Circuit breaker
-    # ------------------------------------------
-
-    breaker_result = operate_breaker(
-        trip_result
-    )
-
-    print("\nCIRCUIT BREAKER")
-
-    print(
-        f"Logical Node: "
-        f"{breaker_result['logical_node']}"
-    )
-
+    print("\nXCBR1 - Circuit Breaker")
     print(
         f"Breaker: "
-        f"{breaker_result['breaker_id']}"
+        f"{breaker_result['breaker']}"
     )
 
     print(
-        f"Command: "
-        f"{breaker_result['command']}"
-    )
-
-    print(
-        f"State: "
+        f"Final state: "
         f"{breaker_result['state']}"
     )
 
-    print("\n" + "=" * 60)
+    print("----------------------------------------")
 
     return {
+        "measurement": current_a,
         "protection": protection_result,
         "trip": trip_result,
         "breaker": breaker_result
     }
 
 
-# ==========================================
-# TEST CASES
-# ==========================================
+# ---------------------------------------------------------
+# Test the IED
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
 
-    # Test 1:
-    # High phase fault current
+    test_cases = [
+        {
+            "current": 850,
+            "fault_type": "phase-to-phase"
+        },
+        {
+            "current": 2000,
+            "fault_type": "phase-to-phase"
+        },
+        {
+            "current": 6000,
+            "fault_type": "phase-to-phase"
+        },
+        {
+            "current": 1500,
+            "fault_type": "phase-to-earth"
+        },
+        {
+            "current": 3500,
+            "fault_type": "phase-to-earth"
+        }
+    ]
 
-    simulate_ied(
-        current_a=6000,
-        fault_type="Phase-to-Phase"
-    )
+    for test in test_cases:
 
-    # Test 2:
-    # Lower magnitude phase fault
-
-    simulate_ied(
-        current_a=2000,
-        fault_type="Phase-to-Phase"
-    )
-
-    # Test 3:
-    # Earth fault
-
-    simulate_ied(
-        current_a=2500,
-        fault_type="Phase-to-Earth"
-    )
-
-    # Test 4:
-    # Normal current
-
-    simulate_ied(
-        current_a=850,
-        fault_type="Phase-to-Phase"
-    )
+        simulate_ied(
+            current_a=test["current"],
+            fault_type=test["fault_type"]
+        )
