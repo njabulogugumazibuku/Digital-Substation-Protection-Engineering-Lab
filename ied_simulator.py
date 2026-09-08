@@ -62,4 +62,4 @@ def simulate_ied(current_a, fault_type):
 
 
 if __name__ == "__main__":
-    print(simulate_ied(6000, "Phase-to-Phase"))
+    print(simulate_ied(2000, "Phase-to-Phase"))
