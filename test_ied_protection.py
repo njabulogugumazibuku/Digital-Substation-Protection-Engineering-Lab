@@ -1,234 +1,237 @@
-# ==========================================
-# DIGITAL SUBSTATION PROTECTION ENGINEERING LAB
-# Automated IED Protection Tests
-# ==========================================
-
+import os
 import sys
-from pathlib import Path
 
-# ------------------------------------------
-# Add project directories to Python path
-# ------------------------------------------
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# ---------------------------------------------------------
+# Import IED simulator
+# ---------------------------------------------------------
 
 sys.path.append(
-    str(PROJECT_ROOT / "03_ied_configuration")
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "03_ied_configuration"
+        )
+    )
 )
 
 from ied_simulator import simulate_ied
 
 
-# ==========================================
-# TEST CASES
-# ==========================================
+# ---------------------------------------------------------
+# Test cases
+# ---------------------------------------------------------
 
 test_cases = [
 
     {
         "id": "TEST-001",
-        "name": "Normal Load",
-        "current_a": 850,
-        "fault_type": "Phase-to-Phase",
-        "expected_protection": "PTOC",
-        "expected_state": "NO OPERATE",
+        "description": "Normal feeder loading",
+        "current": 850,
+        "fault_type": "phase-to-phase",
+        "expected_element": "PTOC",
+        "expected_status": "NO OPERATE",
         "expected_breaker": "CLOSED"
     },
 
     {
         "id": "TEST-002",
-        "name": "High Phase Fault",
-        "current_a": 6000,
-        "fault_type": "Phase-to-Phase",
-        "expected_protection": "PTOC2",
-        "expected_state": "OPERATE",
+        "description": "High phase fault",
+        "current": 6000,
+        "fault_type": "phase-to-phase",
+        "expected_element": "PTOC2",
+        "expected_status": "OPERATE",
         "expected_breaker": "OPEN"
     },
 
     {
         "id": "TEST-003",
-        "name": "Moderate Phase Fault",
-        "current_a": 2000,
-        "fault_type": "Phase-to-Phase",
-        "expected_protection": "PTOC1",
-        "expected_state": "OPERATE",
+        "description": "Moderate phase fault",
+        "current": 2000,
+        "fault_type": "phase-to-phase",
+        "expected_element": "PTOC1",
+        "expected_status": "OPERATE",
         "expected_breaker": "OPEN"
     },
 
     {
         "id": "TEST-004",
-        "name": "High Earth Fault",
-        "current_a": 3500,
-        "fault_type": "Phase-to-Earth",
-        "expected_protection": "PTEF2",
-        "expected_state": "OPERATE",
+        "description": "High earth fault",
+        "current": 3500,
+        "fault_type": "phase-to-earth",
+        "expected_element": "PTEF2",
+        "expected_status": "OPERATE",
         "expected_breaker": "OPEN"
     },
 
     {
         "id": "TEST-005",
-        "name": "Moderate Earth Fault",
-        "current_a": 1500,
-        "fault_type": "Phase-to-Earth",
-        "expected_protection": "PTEF1",
-        "expected_state": "OPERATE",
+        "description": "Moderate earth fault",
+        "current": 1500,
+        "fault_type": "phase-to-earth",
+        "expected_element": "PTEF1",
+        "expected_status": "OPERATE",
         "expected_breaker": "OPEN"
     },
 
     {
         "id": "TEST-006",
-        "name": "Current Below Pickup",
-        "current_a": 400,
-        "fault_type": "Phase-to-Phase",
-        "expected_protection": "PTOC",
-        "expected_state": "NO OPERATE",
+        "description": "Current below pickup",
+        "current": 400,
+        "fault_type": "phase-to-phase",
+        "expected_element": "PTOC",
+        "expected_status": "NO OPERATE",
         "expected_breaker": "CLOSED"
     }
 ]
 
 
-# ==========================================
-# RUN TEST
-# ==========================================
+# ---------------------------------------------------------
+# Test execution
+# ---------------------------------------------------------
 
-def run_test(test):
+def run_tests():
 
-    print("\n" + "=" * 70)
-
-    print(
-        f"{test['id']} - {test['name']}"
-    )
-
-    print("=" * 70)
-
-    result = simulate_ied(
-        current_a=test["current_a"],
-        fault_type=test["fault_type"]
-    )
-
-    actual_protection = (
-        result["protection"]["logical_node"]
-    )
-
-    actual_state = (
-        result["protection"]["state"]
-    )
-
-    actual_breaker = (
-        result["breaker"]["state"]
-    )
-
-    protection_pass = (
-        actual_protection ==
-        test["expected_protection"]
-    )
-
-    state_pass = (
-        actual_state ==
-        test["expected_state"]
-    )
-
-    breaker_pass = (
-        actual_breaker ==
-        test["expected_breaker"]
-    )
-
-    test_passed = (
-        protection_pass
-        and state_pass
-        and breaker_pass
-    )
-
-    print("\nTEST EXPECTATIONS")
-    print("-" * 70)
-
-    print(
-        f"Expected Protection: "
-        f"{test['expected_protection']}"
-    )
-
-    print(
-        f"Actual Protection: "
-        f"{actual_protection}"
-    )
-
-    print(
-        f"Expected State: "
-        f"{test['expected_state']}"
-    )
-
-    print(
-        f"Actual State: "
-        f"{actual_state}"
-    )
-
-    print(
-        f"Expected Breaker: "
-        f"{test['expected_breaker']}"
-    )
-
-    print(
-        f"Actual Breaker: "
-        f"{actual_breaker}"
-    )
-
-    print("\nRESULT")
-
-    if test_passed:
-
-        print("PASS")
-
-    else:
-
-        print("FAIL")
-
-    return test_passed
-
-
-# ==========================================
-# RUN ALL TESTS
-# ==========================================
-
-def run_all_tests():
+    passed = 0
+    failed = 0
 
     print("\n")
-    print("=" * 70)
-    print("IED PROTECTION TEST SUITE")
-    print("=" * 70)
-
-    results = []
+    print("=" * 60)
+    print("IED PROTECTION VALIDATION TEST SUITE")
+    print("=" * 60)
 
     for test in test_cases:
 
-        result = run_test(test)
+        print(f"\n{test['id']} - {test['description']}")
 
-        results.append(result)
+        result = simulate_ied(
+            current_a=test["current"],
+            fault_type=test["fault_type"]
+        )
 
-    passed = sum(results)
-    total = len(results)
+        protection = result["protection"]
+        breaker = result["breaker"]
+
+        actual_element = protection["logical_node"]
+        actual_status = protection["status"]
+        actual_breaker = breaker["state"]
+
+        # -------------------------------------------------
+        # Validate protection element
+        # -------------------------------------------------
+
+        element_pass = (
+            actual_element == test["expected_element"]
+        )
+
+        # -------------------------------------------------
+        # Validate protection status
+        # -------------------------------------------------
+
+        status_pass = (
+            actual_status == test["expected_status"]
+        )
+
+        # -------------------------------------------------
+        # Validate breaker state
+        # -------------------------------------------------
+
+        breaker_pass = (
+            actual_breaker == test["expected_breaker"]
+        )
+
+        # -------------------------------------------------
+        # Validate operating time
+        # -------------------------------------------------
+
+        timing_pass = True
+
+        if actual_status == "OPERATE":
+
+            operating_time = protection[
+                "operating_time_s"
+            ]
+
+            timing_pass = (
+                operating_time is not None
+                and operating_time > 0
+            )
+
+        # -------------------------------------------------
+        # Overall result
+        # -------------------------------------------------
+
+        test_passed = (
+            element_pass
+            and status_pass
+            and breaker_pass
+            and timing_pass
+        )
+
+        if test_passed:
+
+            print("RESULT: PASS")
+            passed += 1
+
+        else:
+
+            print("RESULT: FAIL")
+            failed += 1
+
+        print(
+            f"  Element:  "
+            f"{actual_element} "
+            f"(expected {test['expected_element']})"
+        )
+
+        print(
+            f"  Status:   "
+            f"{actual_status} "
+            f"(expected {test['expected_status']})"
+        )
+
+        print(
+            f"  Breaker:  "
+            f"{actual_breaker} "
+            f"(expected {test['expected_breaker']})"
+        )
+
+        if protection["operating_time_s"] is not None:
+
+            print(
+                f"  Operating time: "
+                f"{protection['operating_time_s']:.3f} s"
+            )
+
+    # -----------------------------------------------------
+    # Test summary
+    # -----------------------------------------------------
+
+    total = passed + failed
 
     print("\n")
-    print("=" * 70)
+    print("=" * 60)
     print("TEST SUMMARY")
-    print("=" * 70)
+    print("=" * 60)
 
-    print(
-        f"Tests Passed: {passed}/{total}"
-    )
+    print(f"Total tests : {total}")
+    print(f"Passed      : {passed}")
+    print(f"Failed      : {failed}")
 
-    print(
-        f"Tests Failed: {total - passed}/{total}"
-    )
+    if failed == 0:
 
-    if passed == total:
-
-        print("OVERALL RESULT: PASS")
+        print("\nALL TESTS PASSED")
 
     else:
 
-        print("OVERALL RESULT: REVIEW REQUIRED")
+        print("\nSOME TESTS FAILED")
 
+    print("=" * 60)
+
+
+# ---------------------------------------------------------
+# Main
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
-
-    run_all_tests()
+    run_tests()
