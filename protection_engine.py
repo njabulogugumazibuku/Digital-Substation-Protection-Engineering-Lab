@@ -1,334 +1,322 @@
-# ==========================================
-# DIGITAL SUBSTATION PROTECTION ENGINEERING LAB
-# Simplified Protection Decision Engine
-# ==========================================
-
 import sys
 from pathlib import Path
 
-
-# ------------------------------------------
-# Add project directories to Python path
-# ------------------------------------------
-
+# Allow imports from the protection-study package included in this repository.
 PROJECT_ROOT = Path(__file__).resolve().parent
-
-sys.path.append(
-    str(PROJECT_ROOT / "02_protection_study")
-)
-
+sys.path.append(str(PROJECT_ROOT / "02_protection_study"))
 
 from fault_scenarios import fault_scenarios
 from protection_settings import protection_settings
 
+from iec_curves import inverse_time
+
+
+# ---------------------------------------------------------
+# Breaker mapping
+# ---------------------------------------------------------
 
 def determine_breaker(location):
     """
-    Determine which circuit breaker is responsible
-    for clearing the fault.
+    Determine which circuit breaker is associated
+    with the fault location.
     """
 
     breaker_map = {
-        "Feeder 1": "CB-301",
-        "Feeder 2": "CB-302",
-        "Feeder 3": "CB-303",
-        "Transformer T1": "CB-101 and CB-201",
-        "Transformer LV Side": "No immediate trip - alarm/thermal logic",
-        "33 kV Bus": "No trip"
+        "Feeder 1": ["CB-301"],
+        "Feeder 2": ["CB-302"],
+        "Feeder 3": ["CB-303"],
+        "Transformer T1": ["CB-101", "CB-201"],
+        "Transformer LV Side": [],
+        "33 kV Bus": []
     }
 
-    return breaker_map.get(
-        location,
-        "Breaker not defined"
+    return breaker_map.get(location, [])
+
+
+# ---------------------------------------------------------
+# Feeder 51 inverse-time protection
+# ---------------------------------------------------------
+
+def calculate_feeder_51_time(current_a):
+    """
+    Calculate feeder 51 operating time using
+    the IEC standard inverse characteristic.
+    """
+
+    settings = protection_settings["feeder_phase_overcurrent"]
+
+    pickup = settings["time_pickup_a"]
+    tms = settings.get("tms", 0.10)
+
+    return inverse_time(
+        current_a=current_a,
+        pickup_a=pickup,
+        tms=tms,
+        curve="standard_inverse"
     )
 
+
+# ---------------------------------------------------------
+# Transformer backup 51 inverse-time protection
+# ---------------------------------------------------------
+
+def calculate_transformer_backup_time(current_a):
+    """
+    Calculate transformer backup 51 operating time
+    using the IEC standard inverse characteristic.
+    """
+
+    settings = protection_settings["transformer_backup_overcurrent"]
+
+    pickup = settings["pickup_a"]
+    tms = settings.get("tms", 0.25)
+
+    return inverse_time(
+        current_a=current_a,
+        pickup_a=pickup,
+        tms=tms,
+        curve="standard_inverse"
+    )
+
+
+# ---------------------------------------------------------
+# Protection evaluation
+# ---------------------------------------------------------
 
 def evaluate_protection(scenario):
     """
-    Evaluate a fault scenario and determine the
-    expected protection response.
+    Evaluate the protection response for a fault scenario.
+
+    Returns a dictionary describing:
+    - protection function
+    - operating time
+    - breaker(s)
+    - trip status
+    - protection role
     """
 
-    current = scenario["current_a"]
-    fault_type = scenario["fault_type"]
+    scenario_id = scenario["scenario_id"]
     location = scenario["location"]
+    fault_type = scenario["fault_type"]
+    current = scenario["current_a"]
 
-    result = {
-        "scenario_id": scenario["scenario_id"],
-        "scenario_name": scenario["name"],
-        "current_a": current,
-        "protection_operated": None,
-        "operation_type": None,
-        "trip_action": None,
-        "operating_time_s": None
-    }
+    breakers = determine_breaker(location)
 
-    # ------------------------------------------
+    # -----------------------------------------------------
     # Normal operation
-    # ------------------------------------------
+    # -----------------------------------------------------
 
-    if fault_type == "None":
+    if scenario_id == "SC-001":
 
-        result["protection_operated"] = "None"
-        result["operation_type"] = "Normal operation"
-        result["trip_action"] = "No trip"
-        result["operating_time_s"] = 0
+        return {
+            "scenario": scenario_id,
+            "protection": "NONE",
+            "status": "NO OPERATE",
+            "operating_time_s": None,
+            "breakers": [],
+            "role": "Normal operation"
+        }
 
-        return result
-
-
-    # ------------------------------------------
+    # -----------------------------------------------------
     # Transformer overload
-    # ------------------------------------------
+    # -----------------------------------------------------
 
-    if fault_type == "Overload":
+    if scenario_id == "SC-002":
 
-        result["protection_operated"] = "49 Thermal"
-        result["operation_type"] = "Alarm / delayed action"
-        result["trip_action"] = "No immediate trip"
-        result["operating_time_s"] = None
+        return {
+            "scenario": scenario_id,
+            "protection": "49",
+            "status": "ALARM",
+            "operating_time_s": None,
+            "breakers": [],
+            "role": "Thermal protection / overload"
+        }
 
-        return result
-
-
-    # ------------------------------------------
+    # -----------------------------------------------------
     # Transformer internal fault
-    # ------------------------------------------
+    # -----------------------------------------------------
 
-    if (
-        location == "Transformer T1"
-        and fault_type == "Internal Fault"
-    ):
+    if scenario_id == "SC-005":
 
-        differential = protection_settings[
-            "transformer_differential"
-        ]
+        return {
+            "scenario": scenario_id,
+            "protection": "87T",
+            "status": "OPERATE",
+            "operating_time_s": 0.05,
+            "breakers": ["CB-101", "CB-201"],
+            "role": "Primary transformer protection"
+        }
 
-        result["protection_operated"] = (
-            differential["function"]
-        )
+    # -----------------------------------------------------
+    # Feeder protection failure
+    # -----------------------------------------------------
 
-        result["operation_type"] = (
-            "Primary transformer protection"
-        )
+    if scenario_id == "SC-006":
 
-        result["trip_action"] = (
-            "Trip CB-101 and CB-201"
-        )
+        backup_time = calculate_transformer_backup_time(current)
 
-        result["operating_time_s"] = 0.05
+        # If backup 51 is below pickup, use the configured
+        # protection delay as a fallback for this synthetic scenario.
+        if backup_time is None:
+            backup_time = protection_settings[
+                "transformer_backup_overcurrent"
+            ]["time_delay_s"]
 
-        return result
+        return {
+            "scenario": scenario_id,
+            "protection": "51",
+            "status": "OPERATE",
+            "operating_time_s": backup_time,
+            "breakers": ["CB-201"],
+            "role": "Backup transformer protection"
+        }
 
+    # -----------------------------------------------------
+    # Breaker failure
+    # -----------------------------------------------------
 
-    # ------------------------------------------
-    # Phase-to-phase feeder fault
-    # ------------------------------------------
+    if scenario_id == "SC-007":
+
+        return {
+            "scenario": scenario_id,
+            "protection": "50BF",
+            "status": "OPERATE",
+            "operating_time_s": protection_settings[
+                "breaker_failure"
+            ]["failure_timer_s"],
+            "breakers": ["CB-201"],
+            "role": "Breaker failure backup protection"
+        }
+
+    # -----------------------------------------------------
+    # Feeder phase fault
+    # -----------------------------------------------------
 
     if fault_type == "Phase-to-Phase":
 
-        phase_settings = protection_settings[
+        instantaneous_pickup = protection_settings[
             "feeder_phase_overcurrent"
-        ]
+        ]["instantaneous_pickup_a"]
 
-        if current >= phase_settings[
-            "instantaneous_pickup_a"
-        ]:
+        time_pickup = protection_settings[
+            "feeder_phase_overcurrent"
+        ]["time_pickup_a"]
 
-            result["protection_operated"] = "50"
+        # 50 instantaneous element
+        if current >= instantaneous_pickup:
 
-            result["operation_type"] = (
-                "Instantaneous overcurrent"
-            )
+            return {
+                "scenario": scenario_id,
+                "protection": "50",
+                "status": "OPERATE",
+                "operating_time_s": 0.05,
+                "breakers": breakers,
+                "role": "Primary feeder instantaneous protection"
+            }
 
-            result["trip_action"] = (
-                f"Trip {determine_breaker(location)}"
-            )
+        # 51 inverse-time element
+        if current >= time_pickup:
 
-            result["operating_time_s"] = 0.05
+            operating_time = calculate_feeder_51_time(current)
 
-            return result
+            return {
+                "scenario": scenario_id,
+                "protection": "51",
+                "status": "OPERATE",
+                "operating_time_s": operating_time,
+                "breakers": breakers,
+                "role": "Primary feeder time-overcurrent protection"
+            }
 
-        elif current >= phase_settings[
-            "time_pickup_a"
-        ]:
-
-            result["protection_operated"] = "51"
-
-            result["operation_type"] = (
-                "Time-delayed overcurrent"
-            )
-
-            result["trip_action"] = (
-                f"Trip {determine_breaker(location)}"
-            )
-
-            result["operating_time_s"] = (
-                phase_settings["time_delay_s"]
-            )
-
-            return result
-
-
-    # ------------------------------------------
-    # Phase-to-earth fault
-    # ------------------------------------------
+    # -----------------------------------------------------
+    # Feeder earth fault
+    # -----------------------------------------------------
 
     if fault_type == "Phase-to-Earth":
 
-        earth_settings = protection_settings[
+        instantaneous_pickup = protection_settings[
             "feeder_earth_fault"
-        ]
+        ]["instantaneous_pickup_a"]
 
-        if current >= earth_settings[
-            "instantaneous_pickup_a"
-        ]:
+        time_pickup = protection_settings[
+            "feeder_earth_fault"
+        ]["time_pickup_a"]
 
-            result["protection_operated"] = "50N"
+        # 50N instantaneous element
+        if current >= instantaneous_pickup:
 
-            result["operation_type"] = (
-                "Instantaneous earth fault"
-            )
+            return {
+                "scenario": scenario_id,
+                "protection": "50N",
+                "status": "OPERATE",
+                "operating_time_s": 0.05,
+                "breakers": breakers,
+                "role": "Primary feeder instantaneous earth-fault protection"
+            }
 
-            result["trip_action"] = (
-                f"Trip {determine_breaker(location)}"
-            )
+        # 51N time-overcurrent element
+        if current >= time_pickup:
 
-            result["operating_time_s"] = 0.05
+            return {
+                "scenario": scenario_id,
+                "protection": "51N",
+                "status": "OPERATE",
+                "operating_time_s": protection_settings[
+                    "feeder_earth_fault"
+                ]["time_delay_s"],
+                "breakers": breakers,
+                "role": "Primary feeder time earth-fault protection"
+            }
 
-            return result
+    # -----------------------------------------------------
+    # No protection operation
+    # -----------------------------------------------------
 
-        elif current >= earth_settings[
-            "time_pickup_a"
-        ]:
-
-            result["protection_operated"] = "51N"
-
-            result["operation_type"] = (
-                "Time-delayed earth fault"
-            )
-
-            result["trip_action"] = (
-                f"Trip {determine_breaker(location)}"
-            )
-
-            result["operating_time_s"] = (
-                earth_settings["time_delay_s"]
-            )
-
-            return result
-
-
-    # ------------------------------------------
-    # Feeder protection failure
-    # ------------------------------------------
-
-    if scenario["name"] == "Feeder Protection Failure":
-
-        backup = protection_settings[
-            "transformer_backup_overcurrent"
-        ]
-
-        if current >= backup["pickup_a"]:
-
-            result["protection_operated"] = "51 Backup"
-
-            result["operation_type"] = (
-                "Upstream backup protection"
-            )
-
-            result["trip_action"] = "Trip CB-201"
-
-            result["operating_time_s"] = (
-                backup["time_delay_s"]
-            )
-
-            return result
+    return {
+        "scenario": scenario_id,
+        "protection": "NONE",
+        "status": "NO OPERATE",
+        "operating_time_s": None,
+        "breakers": [],
+        "role": "No protection threshold exceeded"
+    }
 
 
-    # ------------------------------------------
-    # Breaker failure
-    # ------------------------------------------
-
-    if fault_type == "Breaker Failure":
-
-        breaker_failure = protection_settings[
-            "breaker_failure"
-        ]
-
-        result["protection_operated"] = (
-            breaker_failure["function"]
-        )
-
-        result["operation_type"] = (
-            "Breaker failure protection"
-        )
-
-        result["trip_action"] = "Trip CB-201"
-
-        result["operating_time_s"] = (
-            breaker_failure["failure_timer_s"]
-        )
-
-        return result
-
-
-    # ------------------------------------------
-    # Default response
-    # ------------------------------------------
-
-    result["protection_operated"] = "No operation"
-
-    result["operation_type"] = (
-        "Fault below configured protection thresholds"
-    )
-
-    result["trip_action"] = "No trip"
-
-    result["operating_time_s"] = None
-
-    return result
-
+# ---------------------------------------------------------
+# Run all protection scenarios
+# ---------------------------------------------------------
 
 def run_protection_engine():
-    """
-    Run all fault scenarios through the protection engine.
-    """
 
-    print("=" * 70)
-    print("DIGITAL SUBSTATION PROTECTION ENGINE")
-    print("=" * 70)
+    print("\nDIGITAL SUBSTATION PROTECTION ENGINE")
+    print("====================================")
 
     for scenario in fault_scenarios:
 
         result = evaluate_protection(scenario)
 
-        print(f"\nScenario: {result['scenario_id']}")
-        print(f"Name: {result['scenario_name']}")
-        print(f"Fault Current: {result['current_a']} A")
+        print("\nScenario:", scenario["scenario_id"])
+        print("Description:", scenario["description"])
+        print("Location:", scenario["location"])
+        print("Fault current:", scenario["current_a"], "A")
+        print("Protection:", result["protection"])
+        print("Status:", result["status"])
+        print("Role:", result["role"])
 
-        print(
-            f"Protection Operated: "
-            f"{result['protection_operated']}"
-        )
+        if result["operating_time_s"] is not None:
+            print(
+                "Operating time:",
+                f"{result['operating_time_s']:.3f}",
+                "s"
+            )
 
-        print(
-            f"Operation Type: "
-            f"{result['operation_type']}"
-        )
+        if result["breakers"]:
+            print("Trip breaker(s):", ", ".join(result["breakers"]))
 
-        print(
-            f"Action: "
-            f"{result['trip_action']}"
-        )
 
-        print(
-            f"Operating Time: "
-            f"{result['operating_time_s']} s"
-        )
-
-        print("-" * 70)
-
+# ---------------------------------------------------------
+# Main
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
     run_protection_engine()
