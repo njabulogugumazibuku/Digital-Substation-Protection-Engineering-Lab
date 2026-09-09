@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-
 
 IEC_CURVES = {
     "standard_inverse": {"k": 0.14, "alpha": 0.02},
@@ -21,6 +19,8 @@ def inverse_time(current_a, pickup_a, tms, curve="standard_inverse"):
 
 def run_coordination_study(output_path="05_coordination/tcc_coordination.png"):
     """Print coordination checks and save the time-current coordination plot."""
+    import matplotlib.pyplot as plt
+
     feeder_pickup, feeder_tms = 1200, 0.10
     backup_pickup, backup_tms = 1320, 0.25
     currents = list(range(1300, 20001, 100))
