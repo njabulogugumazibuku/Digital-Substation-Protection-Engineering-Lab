@@ -1,36 +1,16 @@
-import os
 import sys
+from pathlib import Path
 
 # ---------------------------------------------------------
 # Import protection settings
 # ---------------------------------------------------------
 
 sys.path.append(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "02_protection_study"
-        )
-    )
+    str(Path(__file__).resolve().parent / "02_protection_study")
 )
 
 from protection_settings import protection_settings
 
-
-# ---------------------------------------------------------
-# Import IEC inverse-time calculation
-# ---------------------------------------------------------
-
-sys.path.append(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "05_coordination"
-        )
-    )
-)
 
 from iec_curves import inverse_time
 
