@@ -1,227 +1,250 @@
-# ==========================================
-# DIGITAL SUBSTATION PROTECTION ENGINEERING LAB
-# Protection Sequence Simulator
-# ==========================================
-
-from protection_engine import evaluate_protection
-from protection_engine import fault_scenarios
-from protection_engine import protection_settings
+import os
+import sys
 
 
-def simulate_protection_sequence(scenario):
+# ---------------------------------------------------------
+# Import protection decision functions
+# ---------------------------------------------------------
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "04_protection_logic"
+        )
+    )
+)
+
+from protection_decision import (
+    phase_protection_decision,
+    earth_fault_protection_decision
+)
+
+
+# ---------------------------------------------------------
+# Protection sequence simulation
+# ---------------------------------------------------------
+
+def simulate_feeder_fault(
+    current_a,
+    fault_type,
+    breaker_failure=False
+):
     """
-    Simulate the sequence of events following
-    a fault or abnormal operating condition.
+    Simulate a feeder fault from detection through
+    primary protection, breaker operation and,
+    where applicable, breaker-failure backup.
+
+    This is a simplified educational model.
     """
 
-    events = []
-
-    scenario_name = scenario["name"]
-
-    events.append(
-        f"EVENT 1: {scenario_name} detected"
-    )
-
-    # ------------------------------------------
-    # Normal operation
-    # ------------------------------------------
-
-    if scenario["fault_type"] == "None":
-
-        events.append(
-            "EVENT 2: System operating normally"
-        )
-
-        events.append(
-            "RESULT: No protection operation required"
-        )
-
-        return events
-
-    # ------------------------------------------
-    # Transformer overload
-    # ------------------------------------------
-
-    if scenario["fault_type"] == "Overload":
-
-        events.append(
-            "EVENT 2: Thermal overload condition detected"
-        )
-
-        events.append(
-            "EVENT 3: 49 thermal protection issues alarm"
-        )
-
-        events.append(
-            "RESULT: No immediate trip"
-        )
-
-        return events
-
-    # ------------------------------------------
-    # Transformer internal fault
-    # ------------------------------------------
-
-    if (
-        scenario["location"] == "Transformer T1"
-        and scenario["fault_type"] == "Internal Fault"
-    ):
-
-        events.append(
-            "EVENT 2: 87T differential protection operates"
-        )
-
-        events.append(
-            "EVENT 3: Trip command issued to CB-101"
-        )
-
-        events.append(
-            "EVENT 4: Trip command issued to CB-201"
-        )
-
-        events.append(
-            "EVENT 5: Transformer isolated"
-        )
-
-        events.append(
-            "RESULT: Fault cleared by primary protection"
-        )
-
-        return events
-
-    # ------------------------------------------
-    # Feeder protection failure
-    # ------------------------------------------
-
-    if scenario_name == "Feeder Protection Failure":
-
-        backup = protection_settings[
-            "transformer_backup_overcurrent"
-        ]
-
-        events.append(
-            "EVENT 2: Fault detected on Feeder 3"
-        )
-
-        events.append(
-            "EVENT 3: Primary feeder protection unavailable"
-        )
-
-        events.append(
-            "EVENT 4: Fault current persists"
-        )
-
-        events.append(
-            "EVENT 5: Upstream 51 backup timer starts"
-        )
-
-        events.append(
-            f"EVENT 6: Backup delay expires "
-            f"after {backup['time_delay_s']} s"
-        )
-
-        events.append(
-            "EVENT 7: Trip command issued to CB-201"
-        )
-
-        events.append(
-            "RESULT: Fault cleared by upstream backup protection"
-        )
-
-        return events
-
-    # ------------------------------------------
-    # Breaker failure
-    # ------------------------------------------
-
-    if scenario["fault_type"] == "Breaker Failure":
-
-        breaker_failure = protection_settings[
-            "breaker_failure"
-        ]
-
-        events.append(
-            "EVENT 2: Primary protection detects fault"
-        )
-
-        events.append(
-            "EVENT 3: Trip command issued to CB-301"
-        )
-
-        events.append(
-            "EVENT 4: CB-301 fails to open"
-        )
-
-        events.append(
-            "EVENT 5: Fault current persists"
-        )
-
-        events.append(
-            "EVENT 6: 50BF breaker failure timer starts"
-        )
-
-        events.append(
-            f"EVENT 7: Breaker failure timer expires "
-            f"after {breaker_failure['failure_timer_s']} s"
-        )
-
-        events.append(
-            "EVENT 8: Backup trip issued to CB-201"
-        )
-
-        events.append(
-            "RESULT: Fault cleared by backup isolation"
-        )
-
-        return events
-
-    # ------------------------------------------
-    # Standard feeder protection operation
-    # ------------------------------------------
-
-    protection_result = evaluate_protection(scenario)
-
-    events.append(
-        f"EVENT 2: Protection element "
-        f"{protection_result['protection_operated']} operates"
-    )
-
-    events.append(
-        f"EVENT 3: {protection_result['trip_action']}"
-    )
-
-    events.append(
-        "EVENT 4: Circuit breaker opens successfully"
-    )
-
-    events.append(
-        "RESULT: Fault cleared by primary protection"
-    )
-
-    return events
-
-
-def run_protection_sequence():
-
+    print("\n")
     print("=" * 70)
-    print("DIGITAL SUBSTATION PROTECTION SEQUENCE SIMULATOR")
+    print("FEEDER PROTECTION SEQUENCE")
     print("=" * 70)
 
-    for scenario in fault_scenarios:
+    print(f"Fault current: {current_a} A")
+    print(f"Fault type: {fault_type}")
 
-        print(f"\nSCENARIO: {scenario['scenario_id']}")
-        print(f"NAME: {scenario['name']}")
+    # -----------------------------------------------------
+    # Step 1 - Fault detection
+    # -----------------------------------------------------
 
-        print("-" * 70)
+    print("\n[1] FAULT DETECTION")
 
-        events = simulate_protection_sequence(scenario)
+    print(
+        f"Protection IED detects "
+        f"{current_a} A fault current."
+    )
 
-        for event in events:
+    # -----------------------------------------------------
+    # Step 2 - Protection decision
+    # -----------------------------------------------------
 
-            print(event)
+    print("\n[2] PRIMARY PROTECTION")
 
-        print("=" * 70)
+    if fault_type == "phase-to-earth":
 
+        protection_result = earth_fault_protection_decision(
+            current_a
+        )
+
+    else:
+
+        protection_result = phase_protection_decision(
+            current_a
+        )
+
+    print(
+        f"Element: "
+        f"{protection_result['element']}"
+    )
+
+    print(
+        f"Logical Node: "
+        f"{protection_result['logical_node']}"
+    )
+
+    print(
+        f"Status: "
+        f"{protection_result['status']}"
+    )
+
+    operating_time = (
+        protection_result["operating_time_s"]
+    )
+
+    if operating_time is not None:
+
+        print(
+            f"Operating time: "
+            f"{operating_time:.3f} s"
+        )
+
+    # -----------------------------------------------------
+    # Step 3 - No protection operation
+    # -----------------------------------------------------
+
+    if protection_result["status"] == "NO OPERATE":
+
+        print("\n[3] NO TRIP")
+
+        print(
+            "Fault current is below "
+            "protection pickup."
+        )
+
+        return {
+            "primary_operated": False,
+            "breaker_open": False,
+            "breaker_failure": False,
+            "backup_operated": False
+        }
+
+    # -----------------------------------------------------
+    # Step 4 - Trip command
+    # -----------------------------------------------------
+
+    print("\n[3] TRIP COMMAND")
+
+    print(
+        "PTRC1 issues a trip command "
+        "to feeder breaker CB-301."
+    )
+
+    # -----------------------------------------------------
+    # Step 5 - Breaker operation
+    # -----------------------------------------------------
+
+    print("\n[4] CIRCUIT BREAKER RESPONSE")
+
+    if not breaker_failure:
+
+        print("CB-301 receives trip command.")
+
+        print("CB-301 opens successfully.")
+
+        print("Fault is cleared.")
+
+        return {
+            "primary_operated": True,
+            "breaker_open": True,
+            "breaker_failure": False,
+            "backup_operated": False
+        }
+
+    # -----------------------------------------------------
+    # Step 6 - Breaker failure
+    # -----------------------------------------------------
+
+    print("CB-301 receives trip command.")
+
+    print("CB-301 FAILS TO OPEN.")
+
+    print(
+        "Fault current remains present."
+    )
+
+    # -----------------------------------------------------
+    # Step 7 - Breaker failure protection
+    # -----------------------------------------------------
+
+    print("\n[5] BREAKER FAILURE PROTECTION")
+
+    print(
+        "50BF timer starts."
+    )
+
+    breaker_failure_timer = 0.30
+
+    print(
+        f"Breaker failure timer: "
+        f"{breaker_failure_timer:.3f} s"
+    )
+
+    print(
+        "50BF operates after timer expiry."
+    )
+
+    # -----------------------------------------------------
+    # Step 8 - Backup trip
+    # -----------------------------------------------------
+
+    print("\n[6] BACKUP TRIP")
+
+    print(
+        "Backup trip command issued "
+        "to transformer-side breaker CB-201."
+    )
+
+    print("CB-201 opens.")
+
+    print(
+        "Fault is isolated from the "
+        "upstream transformer connection."
+    )
+
+    return {
+        "primary_operated": True,
+        "breaker_open": False,
+        "breaker_failure": True,
+        "backup_operated": True
+    }
+
+
+# ---------------------------------------------------------
+# Demonstration scenarios
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
-    run_protection_sequence()
+
+    # -----------------------------------------------------
+    # Scenario 1 - Normal primary clearing
+    # -----------------------------------------------------
+
+    simulate_feeder_fault(
+        current_a=2000,
+        fault_type="phase-to-phase",
+        breaker_failure=False
+    )
+
+    # -----------------------------------------------------
+    # Scenario 2 - Breaker failure
+    # -----------------------------------------------------
+
+    simulate_feeder_fault(
+        current_a=6000,
+        fault_type="phase-to-phase",
+        breaker_failure=True
+    )
+
+    # -----------------------------------------------------
+    # Scenario 3 - Earth fault with breaker failure
+    # -----------------------------------------------------
+
+    simulate_feeder_fault(
+        current_a=1500,
+        fault_type="phase-to-earth",
+        breaker_failure=True
+    )
