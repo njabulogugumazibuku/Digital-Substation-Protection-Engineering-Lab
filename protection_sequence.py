@@ -10,8 +10,7 @@ sys.path.append(
     os.path.abspath(
         os.path.join(
             os.path.dirname(__file__),
-            "..",
-            "04_protection_logic"
+            "02_protection_study"
         )
     )
 )
@@ -20,230 +19,168 @@ from protection_decision import (
     phase_protection_decision,
     earth_fault_protection_decision
 )
+from protection_settings import protection_settings
 
 
-# ---------------------------------------------------------
-# Protection sequence simulation
-# ---------------------------------------------------------
-
-def simulate_feeder_fault(
+def run_feeder_protection_sequence(
     current_a,
     fault_type,
     breaker_failure=False
 ):
     """
-    Simulate a feeder fault from detection through
-    primary protection, breaker operation and,
-    where applicable, breaker-failure backup.
+    Simulate the protection sequence for a feeder fault.
 
-    This is a simplified educational model.
+    fault_type:
+        "phase-to-phase"
+        "phase-to-earth"
+
+    breaker_failure:
+        False = feeder breaker successfully opens
+        True  = feeder breaker fails and backup protection operates
     """
 
-    print("\n")
     print("=" * 70)
-    print("FEEDER PROTECTION SEQUENCE")
+    print("DIGITAL SUBSTATION PROTECTION SEQUENCE")
     print("=" * 70)
 
-    print(f"Fault current: {current_a} A")
-    print(f"Fault type: {fault_type}")
+    print(f"Fault Current : {current_a} A")
+    print(f"Fault Type    : {fault_type}")
+    print(f"Breaker Fail  : {breaker_failure}")
+    print()
 
-    # -----------------------------------------------------
-    # Step 1 - Fault detection
-    # -----------------------------------------------------
+    # ---------------------------------------------------------
+    # STEP 1 — FAULT DETECTION
+    # ---------------------------------------------------------
 
-    print("\n[1] FAULT DETECTION")
+    print("STEP 1 - FAULT DETECTION")
+    print("-" * 70)
+    print(f"MMXU1 detects current = {current_a} A")
+    print("Fault condition detected")
+    print()
 
-    print(
-        f"Protection IED detects "
-        f"{current_a} A fault current."
-    )
+    # ---------------------------------------------------------
+    # STEP 2 — PRIMARY PROTECTION
+    # ---------------------------------------------------------
 
-    # -----------------------------------------------------
-    # Step 2 - Protection decision
-    # -----------------------------------------------------
-
-    print("\n[2] PRIMARY PROTECTION")
+    print("STEP 2 - PRIMARY PROTECTION")
+    print("-" * 70)
 
     if fault_type == "phase-to-earth":
-
-        protection_result = earth_fault_protection_decision(
-            current_a
-        )
-
+        protection = earth_fault_protection_decision(current_a)
     else:
+        protection = phase_protection_decision(current_a)
 
-        protection_result = phase_protection_decision(
-            current_a
-        )
+    print(f"Logical Node : {protection['logical_node']}")
+    print(f"Function     : {protection['element']}")
+    print(f"State        : {protection['status']}")
 
-    print(
-        f"Element: "
-        f"{protection_result['element']}"
-    )
+    if protection["operating_time_s"] is not None:
+        print(f"Operating Time: {protection['operating_time_s']:.3f} s")
 
-    print(
-        f"Logical Node: "
-        f"{protection_result['logical_node']}"
-    )
+    print()
 
-    print(
-        f"Status: "
-        f"{protection_result['status']}"
-    )
+    # ---------------------------------------------------------
+    # STEP 3 — TRIP DECISION
+    # ---------------------------------------------------------
 
-    operating_time = (
-        protection_result["operating_time_s"]
-    )
+    print("STEP 3 - TRIP DECISION")
+    print("-" * 70)
 
-    if operating_time is not None:
+    if protection["status"] != "OPERATE":
 
-        print(
-            f"Operating time: "
-            f"{operating_time:.3f} s"
-        )
+        print("Protection does not operate")
+        print("No trip command issued")
+        return
 
-    # -----------------------------------------------------
-    # Step 3 - No protection operation
-    # -----------------------------------------------------
+    print("Protection operates")
+    print("PTRC1 receives trip signal")
+    print("PTRC1 issues trip command to XCBR1")
+    print()
 
-    if protection_result["status"] == "NO OPERATE":
+    # ---------------------------------------------------------
+    # STEP 4 — BREAKER RESPONSE
+    # ---------------------------------------------------------
 
-        print("\n[3] NO TRIP")
-
-        print(
-            "Fault current is below "
-            "protection pickup."
-        )
-
-        return {
-            "primary_operated": False,
-            "breaker_open": False,
-            "breaker_failure": False,
-            "backup_operated": False
-        }
-
-    # -----------------------------------------------------
-    # Step 4 - Trip command
-    # -----------------------------------------------------
-
-    print("\n[3] TRIP COMMAND")
-
-    print(
-        "PTRC1 issues a trip command "
-        "to feeder breaker CB-301."
-    )
-
-    # -----------------------------------------------------
-    # Step 5 - Breaker operation
-    # -----------------------------------------------------
-
-    print("\n[4] CIRCUIT BREAKER RESPONSE")
+    print("STEP 4 - BREAKER RESPONSE")
+    print("-" * 70)
 
     if not breaker_failure:
 
-        print("CB-301 receives trip command.")
+        print("XCBR1 receives trip command")
+        print("CB-301 opens")
+        print("Fault cleared by primary protection")
+        print()
 
-        print("CB-301 opens successfully.")
+        print("FINAL RESULT")
+        print("-" * 70)
+        print("PRIMARY PROTECTION SUCCESS")
+        print("CB-301 OPEN")
+        print("FAULT CLEARED")
 
-        print("Fault is cleared.")
+        return
 
-        return {
-            "primary_operated": True,
-            "breaker_open": True,
-            "breaker_failure": False,
-            "backup_operated": False
-        }
+    # ---------------------------------------------------------
+    # STEP 5 — BREAKER FAILURE
+    # ---------------------------------------------------------
 
-    # -----------------------------------------------------
-    # Step 6 - Breaker failure
-    # -----------------------------------------------------
+    print("XCBR1 receives trip command")
+    print("CB-301 FAILS TO OPEN")
+    print()
 
-    print("CB-301 receives trip command.")
+    print("STEP 5 - BREAKER FAILURE PROTECTION")
+    print("-" * 70)
 
-    print("CB-301 FAILS TO OPEN.")
+    breaker_failure_timer = protection_settings[
+        "breaker_failure"
+    ]["failure_timer_s"]
 
-    print(
-        "Fault current remains present."
-    )
+    print("50BF detects breaker failure")
+    print(f"Breaker failure timer = {breaker_failure_timer:.3f} s")
+    print("Timer expires")
+    print()
 
-    # -----------------------------------------------------
-    # Step 7 - Breaker failure protection
-    # -----------------------------------------------------
+    # ---------------------------------------------------------
+    # STEP 6 — BACKUP TRIP
+    # ---------------------------------------------------------
 
-    print("\n[5] BREAKER FAILURE PROTECTION")
+    print("STEP 6 - BACKUP PROTECTION")
+    print("-" * 70)
 
-    print(
-        "50BF timer starts."
-    )
+    print("Backup trip command issued")
+    print("CB-201 opens")
+    print("Fault isolated from transformer LV side")
+    print()
 
-    breaker_failure_timer = 0.30
+    print("FINAL RESULT")
+    print("-" * 70)
+    print("BREAKER FAILURE SEQUENCE SUCCESS")
+    print("CB-301 FAILED")
+    print("50BF OPERATED")
+    print("CB-201 OPEN")
+    print("FAULT ISOLATED")
 
-    print(
-        f"Breaker failure timer: "
-        f"{breaker_failure_timer:.3f} s"
-    )
-
-    print(
-        "50BF operates after timer expiry."
-    )
-
-    # -----------------------------------------------------
-    # Step 8 - Backup trip
-    # -----------------------------------------------------
-
-    print("\n[6] BACKUP TRIP")
-
-    print(
-        "Backup trip command issued "
-        "to transformer-side breaker CB-201."
-    )
-
-    print("CB-201 opens.")
-
-    print(
-        "Fault is isolated from the "
-        "upstream transformer connection."
-    )
-
-    return {
-        "primary_operated": True,
-        "breaker_open": False,
-        "breaker_failure": True,
-        "backup_operated": True
-    }
-
-
-# ---------------------------------------------------------
-# Demonstration scenarios
-# ---------------------------------------------------------
 
 if __name__ == "__main__":
 
-    # -----------------------------------------------------
-    # Scenario 1 - Normal primary clearing
-    # -----------------------------------------------------
+    print("\nTEST 1 - PHASE FAULT\n")
 
-    simulate_feeder_fault(
+    run_feeder_protection_sequence(
         current_a=2000,
         fault_type="phase-to-phase",
         breaker_failure=False
     )
 
-    # -----------------------------------------------------
-    # Scenario 2 - Breaker failure
-    # -----------------------------------------------------
+    print("\n\nTEST 2 - PHASE FAULT + BREAKER FAILURE\n")
 
-    simulate_feeder_fault(
+    run_feeder_protection_sequence(
         current_a=6000,
         fault_type="phase-to-phase",
         breaker_failure=True
     )
 
-    # -----------------------------------------------------
-    # Scenario 3 - Earth fault with breaker failure
-    # -----------------------------------------------------
+    print("\n\nTEST 3 - EARTH FAULT + BREAKER FAILURE\n")
 
-    simulate_feeder_fault(
+    run_feeder_protection_sequence(
         current_a=1500,
         fault_type="phase-to-earth",
         breaker_failure=True

@@ -106,15 +106,15 @@ def earth_fault_protection_decision(current_a):
     # Instantaneous earth-fault protection
     if current_a >= settings["instantaneous_pickup_a"]:
         return {
+            "element": "50N",
             "logical_node": "PTEF2",
-            "function": "50N Earth Fault",
-            "state": "OPERATE",
-            "delay_s": 0.05,
+            "status": "OPERATE",
+            "operating_time_s": 0.05,
             "reason": "Current exceeds instantaneous earth-fault pickup"
         }
 
     # Time-delayed inverse earth-fault protection
-    elif current_a > settings["time_pickup_a"]:
+    elif current_a >= settings["time_pickup_a"]:
         operating_time = inverse_time(
             current_a=current_a,
             pickup_a=settings["time_pickup_a"],
@@ -123,20 +123,20 @@ def earth_fault_protection_decision(current_a):
         )
 
         return {
+            "element": "51N",
             "logical_node": "PTEF1",
-            "function": "51N Earth Fault",
-            "state": "OPERATE",
-            "delay_s": operating_time,
+            "status": "OPERATE",
+            "operating_time_s": operating_time,
             "reason": "Current exceeds 51N pickup; IEC inverse-time operation"
         }
 
     # Below pickup
     else:
         return {
+            "element": "NONE",
             "logical_node": "PTEF1",
-            "function": "51N Earth Fault",
-            "state": "NO OPERATE",
-            "delay_s": None,
+            "status": "NO OPERATE",
+            "operating_time_s": None,
             "reason": "Current below earth-fault pickup"
         }
 

@@ -10,8 +10,10 @@ IEC_CURVES = {
 
 def inverse_time(current_a, pickup_a, tms, curve="standard_inverse"):
     """Return IEC inverse-time operation, or ``None`` below pickup."""
-    if current_a <= pickup_a:
+    if current_a < pickup_a:
         return None
+    if current_a == pickup_a:
+        return float("inf")
     curve_data = IEC_CURVES[curve]
     multiple = current_a / pickup_a
     return tms * curve_data["k"] / (multiple ** curve_data["alpha"] - 1)

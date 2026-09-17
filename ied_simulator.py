@@ -96,7 +96,7 @@ def simulate_ied(current_a, fault_type):
     # Protection decision
     # -----------------------------------------------------
 
-    if fault_type == "phase-to-earth":
+    if fault_type.strip().lower() == "phase-to-earth":
 
         protection_result = earth_fault_protection_decision(
             current_a

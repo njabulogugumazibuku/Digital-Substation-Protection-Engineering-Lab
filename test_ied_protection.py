@@ -98,7 +98,7 @@ def run_test(test):
     )
 
     actual_state = (
-        result["protection"]["state"]
+        result["protection"]["status"]
     )
 
     actual_breaker = (

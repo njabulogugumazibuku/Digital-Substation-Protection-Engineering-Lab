@@ -40,8 +40,8 @@ protection_settings = {
         # Time-delayed earth fault pickup
         "time_pickup_a": 600,
 
-        # Simplified operating delay
-        "time_delay_s": 0.50,
+        # Using inverse time curve for earth fault protection
+        "tms": 0.08,
 
         "description": (
             "Earth fault protection for 33 kV feeders."
