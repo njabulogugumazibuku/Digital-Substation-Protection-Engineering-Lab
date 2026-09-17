@@ -95,66 +95,50 @@ def phase_protection_decision(current_a):
 
 def earth_fault_protection_decision(current_a):
     """
-    Determine which earth-fault element governs.
+    Determine earth-fault protection operation for a feeder.
 
-    Protection hierarchy:
-
-        Below 51N pickup
-            -> No operation
-
-        Above 51N pickup but below 50N pickup
-            -> 51N
-
-        Above 50N pickup
-            -> 50N
+    50N = instantaneous earth-fault overcurrent
+    51N = time-delayed inverse earth-fault overcurrent
     """
 
     settings = protection_settings["feeder_earth_fault"]
 
-    instantaneous_pickup = settings["instantaneous_pickup_a"]
-    time_pickup = settings["time_pickup_a"]
-
-    # -----------------------------------------------------
-    # 50N Instantaneous Earth Fault
-    # -----------------------------------------------------
-
-    if current_a >= instantaneous_pickup:
-
+    # Instantaneous earth-fault protection
+    if current_a >= settings["instantaneous_pickup_a"]:
         return {
-            "element": "50N",
             "logical_node": "PTEF2",
-            "status": "OPERATE",
-            "operating_time_s": 0.05,
-            "reason": "Earth-fault current exceeds instantaneous pickup"
+            "function": "50N Earth Fault",
+            "state": "OPERATE",
+            "delay_s": 0.05,
+            "reason": "Current exceeds instantaneous earth-fault pickup"
         }
 
-    # -----------------------------------------------------
-    # 51N Time Earth Fault
-    # -----------------------------------------------------
-
-    if current_a >= time_pickup:
-
-        operating_time = settings["time_delay_s"]
+    # Time-delayed inverse earth-fault protection
+    elif current_a > settings["time_pickup_a"]:
+        operating_time = inverse_time(
+            current_a=current_a,
+            pickup_a=settings["time_pickup_a"],
+            tms=settings["tms"],
+            curve="standard_inverse"
+        )
 
         return {
-            "element": "51N",
             "logical_node": "PTEF1",
-            "status": "OPERATE",
-            "operating_time_s": operating_time,
-            "reason": "Earth-fault current exceeds time pickup"
+            "function": "51N Earth Fault",
+            "state": "OPERATE",
+            "delay_s": operating_time,
+            "reason": "Current exceeds 51N pickup; IEC inverse-time operation"
         }
 
-    # -----------------------------------------------------
-    # No Operation
-    # -----------------------------------------------------
-
-    return {
-        "element": "NONE",
-        "logical_node": "PTEF",
-        "status": "NO OPERATE",
-        "operating_time_s": None,
-        "reason": "Earth-fault current below protection pickup"
-    }
+    # Below pickup
+    else:
+        return {
+            "logical_node": "PTEF1",
+            "function": "51N Earth Fault",
+            "state": "NO OPERATE",
+            "delay_s": None,
+            "reason": "Current below earth-fault pickup"
+        }
 
 
 # ---------------------------------------------------------
