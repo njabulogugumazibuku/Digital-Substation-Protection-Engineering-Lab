@@ -97,10 +97,7 @@ Verification
                     │
                   CB-301
 ```
-
----
-
-# 3. Protection Functions
+## 3. Protection Functions
 
 The feeder protection model implements four primary overcurrent functions:
 
@@ -125,12 +122,9 @@ Breaker-failure protection is represented by:
 
 50BF
 
+## 4. Protection Behaviour
 
----
-
-# 4. Protection Behaviour
-
-## Phase Protection
+ Phase Protection
 
 Current < 1200 A
         ↓
@@ -168,9 +162,7 @@ Instantaneous operation
 
 The numerical values are synthetic project parameters selected for educational modelling.
 
----
-
-# 5. IED Architecture
+## 5. IED Architecture
 
 The feeder protection IED is modelled using an IEC 61850-inspired logical structure:
 
@@ -207,9 +199,7 @@ The model separates:
 
 This allows the protection chain to be tested and extended independently.
 
----
-
-# 6. Protection Settings
+## 6. Protection Settings
 
 The main synthetic feeder protection settings are:
 
@@ -223,9 +213,7 @@ The main synthetic feeder protection settings are:
 
 The settings are synthetic and are intended to demonstrate protection concepts rather than represent field-ready relay settings.
 
----
-
-# 7. Inverse-Time Protection
+## 7. Inverse-Time Protection
 
 The 51 and 51N functions use an IEC Standard Inverse characteristic.
 
@@ -251,9 +239,8 @@ Time       : approximately 0.606 s
 
 This demonstrates that the 51N function is not simply using a fixed delay.
 
----
 
-# 8. Protection Sequence
+## 8. Protection Sequence
 
 The normal feeder protection sequence is:
 
@@ -281,9 +268,8 @@ CB-301 Opens
       ▼
 Fault Cleared
 
----
 
-# 9. Breaker-Failure Protection
+## 9. Breaker-Failure Protection
 
 The project also models the situation where primary protection operates but the feeder breaker fails to open.
 
@@ -321,9 +307,7 @@ and:
 
 A relay issuing a trip command does not by itself guarantee that the circuit breaker successfully interrupts the fault.
 
----
-
-# 10. Coordination Study
+## 10. Coordination Study
 
 The project evaluates the time separation between feeder primary protection and transformer backup protection.
 
@@ -354,9 +338,7 @@ at 20 kA.
 
 The feeder 50 instantaneous element is configured at 5000 A. Therefore, calculated 51 curve values above 5000 A are useful for studying the theoretical inverse characteristic but do not represent the final clearing time of the complete protection scheme once the instantaneous element operates.
 
----
-
-# 11. Testing & Verification
+## 11. Testing & Verification
 
 The project includes automated tests covering:
 
@@ -384,9 +366,7 @@ PASS
 
 The test suite provides a basic verification layer between the implemented protection logic and the expected engineering behaviour.
 
----
-
-# 12. Repository Structure
+## 12. Repository Structure
 
 Digital-Substation-Protection-Engineering-Lab/
 │
@@ -410,9 +390,8 @@ Digital-Substation-Protection-Engineering-Lab/
 ├── test_breaker_failure.py
 └── comissioning_test_report.md
 
----
 
-# 13. Engineering Concepts Demonstrated
+## 13. Engineering Concepts Demonstrated
 
 ## Electrical Power Systems
 
@@ -453,9 +432,8 @@ Digital-Substation-Protection-Engineering-Lab/
 * Parameterized studies
 * Engineering documentation
 
----
 
-# 14. Engineering Limitations
+## 14. Engineering Limitations
 
 This project is deliberately simplified.
 
@@ -481,9 +459,8 @@ The system parameters, fault currents, and protection settings are synthetic.
 
 The project therefore demonstrates engineering concepts, system thinking, and software implementation rather than field-ready protection design.
 
----
 
-# 15. Future Development
+## 15. Future Development
 
 Potential future extensions include:
 
@@ -498,9 +475,8 @@ Potential future extensions include:
 9. Interactive protection dashboard
 10. Automated commissioning documentation
 
----
 
-# 16. Engineering Approach
+## 16. Engineering Approach
 
 The project follows a systems-engineering approach to protection.
 
@@ -536,9 +512,8 @@ This creates a traceable relationship between:
 * testing; and
 * engineering documentation.
 
----
 
-# 17. Project Status
+## 17. Project Status
 
 ### Completed
 
@@ -570,10 +545,8 @@ This creates a traceable relationship between:
 * [ ] Explore IEC 61850 SCL modelling
 * [ ] Add GOOSE communication simulation
 * [ ] Add disturbance-record analysis
-
----
-
-# 18. Scope & Disclaimer
+s
+## 18. Scope & Disclaimer
 
 This repository is a portfolio and educational engineering project.
 
