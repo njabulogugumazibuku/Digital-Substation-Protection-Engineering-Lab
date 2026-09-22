@@ -392,41 +392,23 @@ Digital-Substation-Protection-Engineering-Lab/
 │
 ├── README.md
 │
-├── 01_system_model/
-│   ├── README.md
-│   ├── system_parameters.csv
-│   └── single_line_diagram.md
-│
-├── 02_protection_study/
-│   ├── rated_current_calculations.py
-│   ├── fault_scenarios.py
-│   └── protection_settings.py
-│
-├── 03_ied_configuration/
-│   ├── ied_model.py
-│   ├── ied_configuration.py
-│   └── ied_simulator.py
-│
-├── 04_protection_logic/
-│   ├── protection_engine.py
-│   ├── protection_sequence.py
-│   └── protection_decision.py
-│
-├── 05_coordination/
-│   ├── iec_curves.py
-│   └── tcc_coordination.png
-│
-├── 06_testing/
-│   ├── test_ied_protection.py
-│   ├── test_coordination.py
-│   ├── coordination_sweep.py
-│   └── test_breaker_failure.py
-│
-└── docs/
-    ├── assumptions.md
-    ├── protection_philosophy.md
-    ├── commissioning_test_report.md
-    └── engineering_decisions.md
+├── rated_current_calculations.py
+├── fault_scenarios.py
+├── protection_settings.py
+├── ied_model.py
+├── ied_configuration.py
+├── ied_simulator.py
+├── protection_engine.py
+├── protection_sequence.py
+├── protection_decision.py
+├── iec_curves.py
+├── tcc_coordination.png
+├── test_ied_protection.py
+├── test_earth_fault_protection.py
+├── test_coordination.py
+├── coordination_sweep.py
+├── test_breaker_failure.py
+└── comissioning_test_report.md
 
 ---
 
