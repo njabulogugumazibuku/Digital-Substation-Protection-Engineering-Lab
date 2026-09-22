@@ -8,13 +8,10 @@ The objective is to show how a fault progresses through the protection system fr
 
 The model uses synthetic system data and is intended for educational and portfolio purposes.
 
----
-
 # 2. Protection System Sequence
 
 The overall protection sequence is:
 
-```text
                          FAULT
                            │
                            ▼
@@ -68,7 +65,6 @@ The overall protection sequence is:
                                   ▼
                            FAULT ISOLATED
 
-```text
 3. Stage 1 — Fault Detection
 
 The protection system first receives a current measurement through the simulated measurement function:
@@ -89,6 +85,7 @@ Current
    │
    ▼
 PTEF1 / PTEF2
+
 4. Stage 2 — Protection Element Selection
 
 The protection decision engine determines which protection element should operate.
@@ -155,6 +152,7 @@ Current ≥ 3000 A
         │
         ▼
 Instantaneous operation
+
 5. Stage 3 — Trip Conditioning
 
 When a protection element operates, its output is passed to:
@@ -229,6 +227,7 @@ Backup Trip
 The simulated breaker-failure timer is:
 
 0.300 s
+
 8. Stage 6 — Backup Isolation
 
 When the breaker-failure timer expires, the backup trip is issued to:
@@ -458,6 +457,7 @@ The verification is performed through:
 ├── test_coordination.py
 ├── coordination_sweep.py
 └── test_breaker_failure.py
+
 16. Summary
 
 The simulated protection sequence connects:
