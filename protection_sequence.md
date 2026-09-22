@@ -67,6 +67,8 @@ The overall protection sequence is:
                                   │
                                   ▼
                            FAULT ISOLATED
+
+```text
 3. Stage 1 — Fault Detection
 
 The protection system first receives a current measurement through the simulated measurement function:
