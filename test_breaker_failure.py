@@ -1,12 +1,3 @@
-from pathlib import Path
-import sys
-
-# Allow imports from the project and protection-study directories.
-PROJECT_ROOT = Path(__file__).resolve().parent
-PROTECTION_STUDY = PROJECT_ROOT / "02_protection_study"
-
-sys.path.append(str(PROTECTION_STUDY))
-
 from protection_decision import (
     phase_protection_decision,
     earth_fault_protection_decision

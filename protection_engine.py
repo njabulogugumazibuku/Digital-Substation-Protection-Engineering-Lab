@@ -1,10 +1,3 @@
-import sys
-from pathlib import Path
-
-# Allow imports from the protection-study package included in this repository.
-PROJECT_ROOT = Path(__file__).resolve().parent
-sys.path.append(str(PROJECT_ROOT / "02_protection_study"))
-
 from fault_scenarios import fault_scenarios
 from protection_settings import protection_settings
 
@@ -257,13 +250,18 @@ def evaluate_protection(scenario):
         # 51N time-overcurrent element
         if current >= time_pickup:
 
+            operating_time = inverse_time(
+                current_a=current,
+                pickup_a=time_pickup,
+                tms=protection_settings["feeder_earth_fault"]["tms"],
+                curve="standard_inverse"
+            )
+
             return {
                 "scenario": scenario_id,
                 "protection": "51N",
                 "status": "OPERATE",
-                "operating_time_s": protection_settings[
-                    "feeder_earth_fault"
-                ]["time_delay_s"],
+                "operating_time_s": operating_time,
                 "breakers": breakers,
                 "role": "Primary feeder time earth-fault protection"
             }

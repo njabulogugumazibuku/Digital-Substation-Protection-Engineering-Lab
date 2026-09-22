@@ -1,20 +1,3 @@
-import os
-import sys
-
-
-# ---------------------------------------------------------
-# Import protection decision functions
-# ---------------------------------------------------------
-
-sys.path.append(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            "02_protection_study"
-        )
-    )
-)
-
 from protection_decision import (
     phase_protection_decision,
     earth_fault_protection_decision

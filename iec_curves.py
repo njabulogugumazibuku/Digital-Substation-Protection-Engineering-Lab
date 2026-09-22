@@ -19,7 +19,7 @@ def inverse_time(current_a, pickup_a, tms, curve="standard_inverse"):
     return tms * curve_data["k"] / (multiple ** curve_data["alpha"] - 1)
 
 
-def run_coordination_study(output_path="05_coordination/tcc_coordination.png"):
+def run_coordination_study(output_path="tcc_coordination.png"):
     """Print coordination checks and save the time-current coordination plot."""
     import matplotlib.pyplot as plt
 

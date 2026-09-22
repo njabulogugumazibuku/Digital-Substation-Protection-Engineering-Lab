@@ -1,21 +1,3 @@
-import os
-import sys
-
-
-# ---------------------------------------------------------
-# Import protection decision engine
-# ---------------------------------------------------------
-
-sys.path.append(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "04_protection_logic"
-        )
-    )
-)
-
 from protection_decision import earth_fault_protection_decision
 
 

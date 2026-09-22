@@ -3,21 +3,6 @@
 # Feeder Protection IED Configuration
 # ==========================================
 
-import sys
-from pathlib import Path
-
-
-# ------------------------------------------
-# Add project directories to Python path
-# ------------------------------------------
-
-PROJECT_ROOT = Path(__file__).resolve().parent
-
-sys.path.append(
-    str(PROJECT_ROOT / "02_protection_study")
-)
-
-
 from protection_settings import protection_settings
 
 
@@ -74,9 +59,9 @@ ied_configuration = {
                 "feeder_earth_fault"
             ]["time_pickup_a"],
 
-            "delay_s": protection_settings[
+            "tms": protection_settings[
                 "feeder_earth_fault"
-            ]["time_delay_s"],
+            ]["tms"],
 
             "output": "PTRC1"
         },

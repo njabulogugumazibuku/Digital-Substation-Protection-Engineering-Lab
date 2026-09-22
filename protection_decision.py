@@ -1,14 +1,3 @@
-import sys
-from pathlib import Path
-
-# ---------------------------------------------------------
-# Import protection settings
-# ---------------------------------------------------------
-
-sys.path.append(
-    str(Path(__file__).resolve().parent / "02_protection_study")
-)
-
 from protection_settings import protection_settings
 
 
