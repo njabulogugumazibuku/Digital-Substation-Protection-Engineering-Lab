@@ -49,13 +49,13 @@ Breaker Behaviour
 Coordination
       ↓
 Verification
-````
+```
 
 ---
 
 ## 2. System Architecture
 
-
+```text
                          132 kV GRID
                               │
                               │
@@ -97,6 +97,7 @@ Verification
                     │
                   CB-301
 ```
+
 ## 3. Protection Functions
 
 The feeder protection model implements four primary overcurrent functions:
@@ -124,8 +125,9 @@ Breaker-failure protection is represented by:
 
 ## 4. Protection Behaviour
 
- Phase Protection
+### Phase Protection
 
+```text
 Current < 1200 A
         ↓
 No operation
@@ -142,7 +144,11 @@ Current ≥ 5000 A
         ↓
 Instantaneous operation
 
-## Earth-Fault Protection
+```
+
+### Earth-Fault Protection
+
+```text
 
 Current < 600 A
         ↓
@@ -159,6 +165,7 @@ Current ≥ 3000 A
 50N / PTEF2
         ↓
 Instantaneous operation
+```
 
 The numerical values are synthetic project parameters selected for educational modelling.
 
@@ -166,6 +173,7 @@ The numerical values are synthetic project parameters selected for educational m
 
 The feeder protection IED is modelled using an IEC 61850-inspired logical structure:
 
+```text
 FEEDER_01_PROTECTION
         │
         └── LD_PROTECTION
@@ -189,6 +197,7 @@ FEEDER_01_PROTECTION
               │
               └── XCBR1
                    └── CB-301
+```
 
 The model separates:
 
@@ -219,23 +228,25 @@ The 51 and 51N functions use an IEC Standard Inverse characteristic.
 
 The model uses:
 
-t = TMS × k / ((I / Ip)^α - 1)
+`t = TMS × k / ((I / Ip)^α - 1)`
 
 where:
 
 
-k = 0.14
-α = 0.02
+- `k = 0.14`
+- `α = 0.02`
 
 The operating time therefore changes according to the magnitude of the fault current.
 
 For example, the 1500 A earth-fault test produced:
 
 
+```text
 Protection : PTEF1
 Function   : 51N
 State      : OPERATE
 Time       : approximately 0.606 s
+```
 
 This demonstrates that the 51N function is not simply using a fixed delay.
 
@@ -244,7 +255,7 @@ This demonstrates that the 51N function is not simply using a fixed delay.
 
 The normal feeder protection sequence is:
 
-
+```text
 Fault Detected
       │
       ▼
@@ -267,12 +278,13 @@ CB-301 Opens
       │
       ▼
 Fault Cleared
-
+```
 
 ## 9. Breaker-Failure Protection
 
 The project also models the situation where primary protection operates but the feeder breaker fails to open.
 
+```text
 Fault Detected
       │
       ▼
@@ -296,6 +308,7 @@ CLEAR     50BF
             │
             ▼
       Fault Isolated
+```
 
 This demonstrates the distinction between:
 
@@ -311,9 +324,7 @@ A relay issuing a trip command does not by itself guarantee that the circuit bre
 
 The project evaluates the time separation between feeder primary protection and transformer backup protection.
 
-A project-defined minimum coordination margin of:
-
-0.30 s
+A project-defined minimum coordination margin of `0.30 s`
 
 is used as the educational acceptance criterion.
 
@@ -328,9 +339,7 @@ The automated coordination sweep produced:
 |         15 kA |     0.270 s |     0.703 s | 0.432 s |
 |         20 kA |     0.242 s |     0.626 s | 0.385 s |
 
-The smallest tested margin was approximately:
-
-0.385 s
+The smallest tested margin was approximately `0.385 s`
 
 at 20 kA.
 
@@ -352,6 +361,7 @@ The current functional tests have passed.
 
 Example test structure:
 
+```text
 TEST-001 - Primary Phase Protection
 PASS
 
@@ -363,11 +373,13 @@ PASS
 
 TEST-004 - Earth Fault Breaker Failure
 PASS
+```
 
 The test suite provides a basic verification layer between the implemented protection logic and the expected engineering behaviour.
 
 ## 12. Repository Structure
 
+```text
 Digital-Substation-Protection-Engineering-Lab/
 │
 ├── README.md
@@ -389,11 +401,11 @@ Digital-Substation-Protection-Engineering-Lab/
 ├── coordination_sweep.py
 ├── test_breaker_failure.py
 └── comissioning_test_report.md
-
+```
 
 ## 13. Engineering Concepts Demonstrated
 
-## Electrical Power Systems
+### Electrical Power Systems
 
 * Three-phase transformer calculations
 * Transformer ratings
@@ -403,7 +415,7 @@ Digital-Substation-Protection-Engineering-Lab/
 * Earth-fault protection
 * Protection coordination
 
-## Protection Engineering
+### Protection Engineering
 
 * ANSI 50/51 functions
 * ANSI 50N/51N functions
@@ -413,7 +425,7 @@ Digital-Substation-Protection-Engineering-Lab/
 * Trip conditioning
 * Backup protection
 
-## Digital Substations
+### Digital Substations
 
 * IED architecture
 * Logical devices
@@ -423,7 +435,7 @@ Digital-Substation-Protection-Engineering-Lab/
 * Breaker control
 * IEC 61850-inspired modelling
 
-## Software Engineering
+### Software Engineering
 
 * Modular architecture
 * Reusable protection functions
@@ -482,6 +494,7 @@ The project follows a systems-engineering approach to protection.
 
 Rather than treating the relay as an isolated calculation, the model connects:
 
+```text
 Electrical System
       ↓
 Measurements
@@ -499,6 +512,7 @@ Breaker-Failure Protection
 Backup Isolation
       ↓
 Verification
+```
 
 This creates a traceable relationship between:
 
@@ -545,7 +559,7 @@ This creates a traceable relationship between:
 * [ ] Explore IEC 61850 SCL modelling
 * [ ] Add GOOSE communication simulation
 * [ ] Add disturbance-record analysis
-s
+
 ## 18. Scope & Disclaimer
 
 This repository is a portfolio and educational engineering project.
