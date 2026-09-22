@@ -8,7 +8,7 @@ The objective is to show how a fault progresses through the protection system fr
 
 The model uses synthetic system data and is intended for educational and portfolio purposes.
 
-# 2. Protection System Sequence
+## 2. Protection System Sequence
 
 The overall protection sequence is:
 
@@ -65,7 +65,7 @@ The overall protection sequence is:
                                   ▼
                            FAULT ISOLATED
 
-3. Stage 1 — Fault Detection
+## 3. Stage 1 — Fault Detection
 
 The protection system first receives a current measurement through the simulated measurement function:
 
@@ -86,7 +86,7 @@ Current
    ▼
 PTEF1 / PTEF2
 
-4. Stage 2 — Protection Element Selection
+## 4. Stage 2 — Protection Element Selection
 
 The protection decision engine determines which protection element should operate.
 
@@ -153,7 +153,7 @@ Current ≥ 3000 A
         ▼
 Instantaneous operation
 
-5. Stage 3 — Trip Conditioning
+##  5. Stage 3 — Trip Conditioning
 
 When a protection element operates, its output is passed to:
 
@@ -176,7 +176,7 @@ Trip Command
 
 This architecture keeps protection decision-making separate from breaker control.
 
-6. Stage 4 — Circuit-Breaker Operation
+##  6. Stage 4 — Circuit-Breaker Operation
 
 The simulated feeder breaker is:
 
@@ -197,7 +197,7 @@ Protection Operates
 
 This represents successful primary protection.
 
-7. Stage 5 — Breaker Failure
+##  7. Stage 5 — Breaker Failure
 
 Protection operation does not automatically guarantee successful fault interruption.
 
@@ -228,7 +228,7 @@ The simulated breaker-failure timer is:
 
 0.300 s
 
-8. Stage 6 — Backup Isolation
+## 8. Stage 6 — Backup Isolation
 
 When the breaker-failure timer expires, the backup trip is issued to:
 
@@ -255,7 +255,7 @@ Fault Isolated
 
 CB-201 therefore provides a backup isolation path when the feeder breaker fails.
 
-9. Example — 1500 A Earth Fault
+## 9. Example — 1500 A Earth Fault
 
 A representative test case uses:
 
@@ -306,7 +306,7 @@ Fault Isolated
 
 The test demonstrates that the 51N element uses inverse-time operation rather than a fixed operating delay.
 
-10. Example — 6000 A Phase Fault
+## 10. Example — 6000 A Phase Fault
 
 A high-current phase fault uses:
 
@@ -348,7 +348,7 @@ Fault Isolated
 
 This demonstrates the high-current instantaneous protection path and subsequent breaker-failure backup.
 
-11. Protection Zones
+## 11. Protection Zones
 
 The simplified protection philosophy can be represented as:
 
@@ -375,7 +375,7 @@ The feeder protection is primarily responsible for faults within its protected f
 
 The transformer backup protection provides a higher-level protection layer if the feeder protection path does not successfully clear the fault.
 
-12. Primary vs Backup Protection
+## 12. Primary vs Backup Protection
 
 The protection architecture intentionally separates primary and backup functions.
 
@@ -405,7 +405,7 @@ CB-201
 
 The objective is to isolate the fault when the primary circuit breaker fails.
 
-13. Engineering Principle
+## 13. Engineering Principle
 
 The key principle demonstrated by the simulation is:
 
@@ -415,7 +415,7 @@ The protection IED can correctly detect a fault and issue a trip command while t
 
 Breaker-failure protection provides an additional layer of system security by initiating backup isolation when this occurs.
 
-14. Current Model Limitations
+## 14. Current Model Limitations
 
 The breaker-failure model is intentionally simplified.
 
@@ -434,7 +434,7 @@ physical IEC 61850 communication.
 
 The current model therefore demonstrates the logical protection sequence rather than reproducing the complete behaviour of a physical substation.
 
-15. Related Files
+## 15. Related Files
 
 The protection sequence is implemented through:
 
@@ -458,7 +458,7 @@ The verification is performed through:
 ├── coordination_sweep.py
 └── test_breaker_failure.py
 
-16. Summary
+## 16. Summary
 
 The simulated protection sequence connects:
 
